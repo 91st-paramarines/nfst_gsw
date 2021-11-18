@@ -1,0 +1,12 @@
+name            = "91st Paramarines - Grenade Selection Wheel";
+author          = "Kerpollo";
+picture         = "nfst_logo.paa";
+description     = "91st Paramarines - Grenade Selection Wheel";
+action          = "https://www.91st-paramarines.com/";
+actionName      = "Unit website";
+logo            = "nfst_logo.paa";
+logoOver        = "nfst_logo.paa";
+tooltip         = "91st Paramarines - Grenade Selection Wheel";
+tooltipOwned    = "91st Paramarines - Grenade Selection Wheel Owned";
+overview        = "The 91st Paramarines - Grenade Selection Wheel mod makes it easier to select grenades.";
+overviewPicture = "nfst_logo.paa";

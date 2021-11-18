@@ -1,0 +1,4 @@
+#define MAINPREFIX x
+#define PREFIX nfst_gsw
+
+#define COMPONENT_NAME QUOTE(NFST GSW - COMPONENT_BEAUTIFIED)
