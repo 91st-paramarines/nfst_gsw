@@ -146,8 +146,6 @@ _onMouseMove = _hud displayAddEventHandler
       {
         _breakoutDistance = _distance;
         _currentCtrl = _ctrl;
-        systemChat str _className;
-        systemChat str _imagePath;
         uiNameSpace setVariable ["NFST_GSW_Selection", [_className, _imagePath]];
       };
     } forEach _displayData;
