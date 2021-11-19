@@ -1,6 +1,6 @@
+// Get player's items
 private _loadout = getUnitLoadout player;
 private _allItems = [];
-
 for "_i" from 3 to 5 do
 {
   _slotLoadout = _loadout select _i;
@@ -10,8 +10,8 @@ for "_i" from 3 to 5 do
   }
 };
 
+// Get player's throwables
 private _allThrowables = [];
-
 {
   _itemClassName = _x select 0;
   if ( _itemClassName call BIS_fnc_isThrowable) then
@@ -22,7 +22,7 @@ private _allThrowables = [];
 } forEach _allItems;
 
 
-// Show wheel
+// Compute wheel display data
 _angularSeparation = 360 / count _allThrowables;
 _currentAngle = 0;
 _objectSize = 0.3;
@@ -33,8 +33,9 @@ _maxSize = _size / 4;
 _displayData = [];
 //_hud = uiNamespace getVariable "NFST_GSW";
 _hud = findDisplay 46;
+uiNameSpace setVariable ["NFST_GSW_Display", _hud];
+
 {
-  // compute display shit
   _className = _x select 0;
 	_imagePath = _x select 1;
 
@@ -55,8 +56,7 @@ _hud = findDisplay 46;
   _displayData append [[_className, _imagePath, _pos, _objectSize]]; //objectSize is constant
 } forEach _allThrowables;
 
-
-// display shit
+// Display the wheel items
 {
   _imagePath = _x select 1;
   _pos = _x select 2;
@@ -89,5 +89,94 @@ _ctrl ctrlSetText _imagePath;
 _ctrl ctrlCommit 0;
 
 uiNameSpace setVariable ["NFST_GSW_Cursor", _ctrl];
+uiNameSpace setVariable ["NFST_GSW_Center", [_centerX, _centerY]];
 
 // Add on mouse moved event handler to update the cursor position
+_onMouseMove = _hud displayAddEventHandler
+[
+  "MouseMoving",
+  {
+    params ["_control", "_xPos", "_yPos"];
+
+    _pos = [_xPos, _yPos];
+
+    _cursor = uiNameSpace getVariable ["NFST_GSW_Cursor", []];
+
+    _cursorWidth = 0.1;
+    _cursorHeigth = 0.1;
+    _cursorCenterX = _xPos + _cursorWidth * 0.5;
+    _cursorCenterY = _yPos + _cursorHeigth * 0.5;
+
+    _center = uiNameSpace getVariable ["NFST_GSW_Center", []];
+    _centerX = _center select 0;
+    _centerY = _center select 1;
+
+    _dx = (_cursorCenterX - _centerX);
+    _dy = (_cursorCenterY - _centerY);
+
+    _dx = _dx * _dx;
+    _dy = _dy * _dy;
+
+    _distance = sqrt (_dx +_dy);
+    _maxSize = 0.3/4;
+
+    _cursor ctrlSetPositionX (_xPos+_centerX);
+    _cursor ctrlSetPositionY (_yPos+_centerY);
+    _cursor ctrlCommit 1;
+
+    _displayData = uiNameSpace getVariable ["NFST_GSW_Items", []];
+    _currentCtrl = controlNull;
+    _breakoutDistance = 100;
+    {
+      _className = _x select 0;
+      _imagePath = _x select 1;
+      _pos = _x select 2;
+      _ctrl = _x select 4;
+
+      _ctrl ctrlSetTextColor [1, 1, 1, 0.6];
+      _dx = (_xPos+_centerX - (_pos select 0));
+      _dy = (_yPos+_centerY - (_pos select 1));
+
+      _dx = _dx * _dx;
+      _dy = _dy * _dy;
+
+      _distance = sqrt (_dx +_dy);
+
+      if (_distance < _breakoutDistance) then
+      {
+        _breakoutDistance = _distance;
+        _currentCtrl = _ctrl;
+        systemChat str _className;
+        systemChat str _imagePath;
+        uiNameSpace setVariable ["NFST_GSW_Selection", [_className, _imagePath]];
+      };
+    } forEach _displayData;
+
+    _currentCtrl ctrlSetTextColor [1, 1, 1, 1];
+/*
+    if (_xPos isEqualTo 0 || _xPos isEqualTo -0 || _yPos isEqualTo 0 || _yPos isEqualTo -0) then {} else
+    {
+      if(_distance < _maxSize) then
+      {
+        _cursor ctrlSetPositionX (_xPos+_centerX);
+        _cursor ctrlSetPositionY (_yPos+_centerY);
+        _cursor ctrlCommit 1;
+      }
+      else
+      {
+        _fromoriginX = _xPos - _centerX;
+        _fromoriginY = _yPos - _centerY;
+
+        _fromoriginX = _fromoriginX * (_maxSize/_distance);
+        _fromoriginY = _fromoriginY * (_maxSize/_distance);
+
+        _cursor ctrlSetPositionX (_fromoriginX+_centerX);
+        _cursor ctrlSetPositionY (_fromoriginY+_centerY);
+        _cursor ctrlCommit 0.1;
+      };
+    };
+    */
+  }
+];
+
+uiNameSpace setVariable ["NFST_GSW_MouseEvent", [_onMouseMove]];
