@@ -1,5 +1,5 @@
 // Get player's items
-private _loadout = getUnitLoadout player;
+private _loadout  = getUnitLoadout player;
 private _allItems = [];
 for "_i" from 3 to 5 do
 {
@@ -9,6 +9,7 @@ for "_i" from 3 to 5 do
     _allItems append (_slotLoadout select 1);
   }
 };
+
 
 // Get player's throwables
 private _allThrowables = [];
@@ -20,160 +21,115 @@ private _allThrowables = [];
     _allThrowables append [[_itemClassName, _picture]];
   };
 } forEach _allItems;
+_allThrowables sort true;
 
 
 // Compute wheel display data
-_angularSeparation = 360 / count _allThrowables;
+_deltaAngle   = 360 / count _allThrowables;
 _currentAngle = 0;
-_objectSize = 0.3;
-_size = 0.3;
-_animListCenterX = ( safeZoneX + ( safeZoneWAbs * 0.5)) - ( _objectSize * 0.5) ;
-_animListyCenterY =  ( safeZoneY + (safeZoneH * 0.5)) - (_objectSize * 0.5);
-_maxSize = _size / 4;
-_displayData = [];
-//_hud = uiNamespace getVariable "NFST_GSW";
-_hud = findDisplay 46;
-uiNameSpace setVariable ["NFST_GSW_Display", _hud];
-
+_imageSize    = 0.2;
+_size         = 0.6;
+_aspectRatio  = 0.75;
+_displayData  = [];
 {
   _className = _x select 0;
 	_imagePath = _x select 1;
 
-	_posX = ((cos _currentAngle)*_size) + _animListCenterX;
-	_posY = ((sin _currentAngle)*_size) + _animListyCenterY;
+	_posX = 0.5 - 0.5 * _imageSize + ((cos _currentAngle)*_size) * _aspectRatio;
+	_posY = 0.5 - 0.5 * _imageSize + ((sin _currentAngle)*_size);
 
-	_pos = [_posX,_posY];
+  _displayData append [[_className, _imagePath, [_posX, _posY]]];
 
-
-	_control1PosX = _posX + ( _objectSize * 0.5);
-	_control1PosY = _posY + ( _objectSize * 0.5);
-
-
-	_centerPos = [_control1PosX,_control1PosY];
-
-	_currentAngle = _currentAngle + _angularSeparation;
-
-  _displayData append [[_className, _imagePath, _pos, _objectSize]]; //objectSize is constant
+  _currentAngle = _currentAngle + _deltaAngle;
 } forEach _allThrowables;
 
+
 // Display the wheel items
+_display = findDisplay 46;
 {
   _imagePath = _x select 1;
-  _pos = _x select 2;
-  _objectSize = _x select 3;
+  _imagePos  = _x select 2;
 
-  _type = "RscPictureKeepAspect";
+  _image = _display ctrlCreate ["RscPictureKeepAspect", -1];
+  _image ctrlSetPosition [_imagePos select 0, _imagePos select 1, _imageSize, _imageSize];
+  _image ctrlSetTextColor [1, 1, 1, 0.5];
+  _image ctrlSetBackgroundColor [0, 1, 0, 1];
+  _image ctrlSetText _imagePath;
+  _image ctrlCommit 0;
 
-  _ctrl = _hud ctrlCreate [_type, -1];
-  _ctrl ctrlSetPosition [_pos select 0,_pos select 1,_objectSize,_objectSize];
-  _ctrl ctrlSetTextColor [1, 1, 1, 0.6];
-  _ctrl ctrlSetText _imagePath;
-  _ctrl ctrlCommit 0;
-
-  _x set [4, _ctrl];
+  _x set [3, _image];
 } forEach _displayData;
 
-uiNameSpace setVariable ["NFST_GSW_Items", _displayData];
 
 // Display the cursor at center position
-_width = 0.1;
-_height = 0.1;
-_centerX = ((safeZoneW - _width) / 2 + SafeZoneX);
-_centerY = ((safeZoneH - _height) / 2 + SafeZoneY);
-_imagePath = "\x\nfst_gsw\addons\main\data\optionWheelCursor.paa";
+_cursorRadius = 0.1;
+_cursorCenter = 0.5 - _cursorRadius * 0.5;
+_imagePath = "\x\nfst_gsw\addons\main\data\selector.paa";
 
-_ctrl = _hud ctrlCreate ["RscPictureKeepAspect", -1];
-_ctrl ctrlSetPosition [_centerX,_centerY,_width,_height];
-_ctrl ctrlSetTextColor [1, 1, 1, 0.6];
-_ctrl ctrlSetText _imagePath;
-_ctrl ctrlCommit 0;
+_cursor = _display ctrlCreate ["RscPictureKeepAspect", -1];
+_cursor ctrlSetPosition [_cursorCenter, _cursorCenter, _cursorRadius, _cursorRadius];
+_cursor ctrlSetTextColor [1, 1, 1, 0.6];
+_cursor ctrlSetText _imagePath;
+_cursor ctrlCommit 0;
 
-uiNameSpace setVariable ["NFST_GSW_Cursor", _ctrl];
-uiNameSpace setVariable ["NFST_GSW_Center", [_centerX, _centerY]];
+
+// Share required data
+uiNameSpace setVariable ["NFST_GSW_Display"   , _display];
+uiNameSpace setVariable ["NFST_GSW_Items"     , _displayData];
+uiNameSpace setVariable ["NFST_GSW_Cursor"    , [_cursor, _cursorCenter, _cursorRadius]];
+
 
 // Add on mouse moved event handler to update the cursor position
-_onMouseMove = _hud displayAddEventHandler
+_onMouseMove = _display displayAddEventHandler
 [
   "MouseMoving",
   {
     params ["_control", "_xPos", "_yPos"];
-
     _pos = [_xPos, _yPos];
 
-    _cursor = uiNameSpace getVariable ["NFST_GSW_Cursor", []];
+    _itemsData  = uiNameSpace getVariable ["NFST_GSW_Items" , []];
+    _cursorData = uiNameSpace getVariable ["NFST_GSW_Cursor", []];
+    _cursorCtrl   = _cursorData select 0;
+    _cursorZeroed = _cursorData select 1;
+    _cursorRadius = _cursorData select 2;
 
-    _cursorWidth = 0.1;
-    _cursorHeigth = 0.1;
-    _cursorCenterX = _xPos + _cursorWidth * 0.5;
-    _cursorCenterY = _yPos + _cursorHeigth * 0.5;
+    // Get old cursor position
+    _oldPos = ctrlPosition _cursorCtrl;
+    _oldX = (_oldPos select 0) - _cursorRadius * 0.5;
+    _oldY = (_oldPos select 1) - _cursorRadius * 0.5;
 
-    _center = uiNameSpace getVariable ["NFST_GSW_Center", []];
-    _centerX = _center select 0;
-    _centerY = _center select 1;
 
-    _dx = (_cursorCenterX - _centerX);
-    _dy = (_cursorCenterY - _centerY);
+    // Update cursor position
+    _sensitivity = 5;
+    _cursorCtrl ctrlSetPositionX (_xPos * _sensitivity + _cursorZeroed);
+    _cursorCtrl ctrlSetPositionY (_yPos * _sensitivity + _cursorZeroed);
+    _cursorCtrl ctrlCommit 2;
 
-    _dx = _dx * _dx;
-    _dy = _dy * _dy;
-
-    _distance = sqrt (_dx +_dy);
-    _maxSize = 0.3/4;
-
-    _cursor ctrlSetPositionX (_xPos+_centerX);
-    _cursor ctrlSetPositionY (_yPos+_centerY);
-    _cursor ctrlCommit 1;
-
-    _displayData = uiNameSpace getVariable ["NFST_GSW_Items", []];
-    _currentCtrl = controlNull;
-    _breakoutDistance = 100;
+    // See if cursor is near an image, and select if close enough
+    _selectedControl   = controlNull;
+    _selectionDistance = 0.2;
     {
       _className = _x select 0;
       _imagePath = _x select 1;
-      _pos = _x select 2;
-      _ctrl = _x select 4;
+      _imagePos  = _x select 2;
+      _imageCtrl = _x select 3;
 
-      _ctrl ctrlSetTextColor [1, 1, 1, 0.6];
-      _dx = (_xPos+_centerX - (_pos select 0));
-      _dy = (_yPos+_centerY - (_pos select 1));
+      _imageCtrl ctrlSetTextColor [1, 1, 1, 0.5];
 
-      _dx = _dx * _dx;
-      _dy = _dy * _dy;
+      _dx = _oldX - (_imagePos select 0);
+      _dy = _oldY - (_imagePos select 1);
 
-      _distance = sqrt (_dx +_dy);
+      _distance = sqrt (_dx * _dx + _dy * _dy);
 
-      if (_distance < _breakoutDistance) then
+      if (_distance < _selectionDistance) then
       {
-        _breakoutDistance = _distance;
-        _currentCtrl = _ctrl;
+        _selectionDistance = _distance ;
+        _selectedControl   = _imageCtrl;
         uiNameSpace setVariable ["NFST_GSW_Selection", [_className, _imagePath]];
       };
-    } forEach _displayData;
+    } forEach _itemsData;
 
-    _currentCtrl ctrlSetTextColor [1, 1, 1, 1];
-/*
-    if (_xPos isEqualTo 0 || _xPos isEqualTo -0 || _yPos isEqualTo 0 || _yPos isEqualTo -0) then {} else
-    {
-      if(_distance < _maxSize) then
-      {
-        _cursor ctrlSetPositionX (_xPos+_centerX);
-        _cursor ctrlSetPositionY (_yPos+_centerY);
-        _cursor ctrlCommit 1;
-      }
-      else
-      {
-        _fromoriginX = _xPos - _centerX;
-        _fromoriginY = _yPos - _centerY;
-
-        _fromoriginX = _fromoriginX * (_maxSize/_distance);
-        _fromoriginY = _fromoriginY * (_maxSize/_distance);
-
-        _cursor ctrlSetPositionX (_fromoriginX+_centerX);
-        _cursor ctrlSetPositionY (_fromoriginY+_centerY);
-        _cursor ctrlCommit 0.1;
-      };
-    };
-    */
+    _selectedControl ctrlSetTextColor [1, 1, 1, 1];
   }
 ];
 

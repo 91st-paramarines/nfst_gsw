@@ -1,2 +1,2 @@
-- Find the correct display idd
-- need to spawn showWHeel and use disable serizlization to use this elcet 0 to dffond the display
+- Make a slider out of the _coef variable (sensibility)
+- Optimize the initial collection of player items
