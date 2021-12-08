@@ -1,2 +1,3 @@
 - Make a slider out of the _coef variable (sensibility)
-- Optimize the initial collection of player items
+- Make use of the compiled function for the vanilla selection wheel
+- Categorize throwables in the ACE menu to reduce cluster

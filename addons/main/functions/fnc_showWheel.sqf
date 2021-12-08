@@ -12,17 +12,20 @@ for "_i" from 3 to 5 do
 
 
 // Get player's throwables
-private _allThrowables = [];
+private _seenThrowables = [];
+private _allThrowables  = [];
 {
   _itemClassName = _x select 0;
-  if ( _itemClassName call BIS_fnc_isThrowable) then
+  if (!(_itemClassName in _seenThrowables) && (_itemClassName call BIS_fnc_isThrowable)) then
   {
-    _picture = (getText (configFile >> 'CfgMagazines' >> _itemClassName >> 'picture'));
-    _allThrowables append [[_itemClassName, _picture]];
-  };
+    _seenThrowables pushBack _itemClassName;
+    _picture     = (getText (configFile >> 'CfgMagazines' >> _itemClassName >> 'picture'));
+    _displayName = (getText (configFile >> 'CfgMagazines' >> _itemClassName >> 'displayName'));
+    _allThrowables append [[_itemClassName, _picture, _displayName]]; // use pushBack
+  }
 } forEach _allItems;
 _allThrowables sort true;
-
+if (count _allThrowables == 0) exitWith {};
 
 // Compute wheel display data
 _deltaAngle   = 360 / count _allThrowables;

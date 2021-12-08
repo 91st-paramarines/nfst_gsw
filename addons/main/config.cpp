@@ -7,7 +7,7 @@ class CfgPatches
     // Meta information for editor
     name   = COMPONENT_NAME;
     author = "Kerpollo";
-    //url    = ECSTRING(main, URL);
+    url    = CSTRING(URL);
 
     // Requirements data
     requiredVersion  = 1.98;
@@ -19,4 +19,5 @@ class CfgPatches
   };
 };
 
+#include "CfgFunctions.hpp"
 #include "CfgEventhandlers.hpp"
